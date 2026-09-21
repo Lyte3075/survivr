@@ -5,61 +5,26 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Survivr</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#10141b;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none}canvas{display:block;width:100%;height:100%;background:#18221b}
-#menu{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 30%,#273247,#0b0e14 70%);z-index:10}
-.panel{width:min(92vw,520px);padding:30px;border:1px solid #ffffff20;border-radius:24px;background:#111722eF;box-shadow:0 20px 80px #0008;text-align:center}
-h1{font-size:64px;letter-spacing:8px;margin:0 0 4px;font-weight:900}p{color:#aeb8c9}.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0}button{border:1px solid #ffffff22;background:#202a38;color:white;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer}button.active{background:#4c79ff}.primary{width:100%;background:#4c79ff;font-size:18px;padding:15px;margin-top:12px}
-#hud{position:fixed;inset:0;pointer-events:none;display:none}.top{position:absolute;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;font-weight:800;text-shadow:0 2px 4px #000}.bar{width:180px;height:14px;background:#0008;border-radius:8px;overflow:hidden;margin-top:5px}.fill{height:100%;background:#55dc78;width:100%}
-#status{position:absolute;top:18px;left:50%;transform:translateX(-50%);font-size:15px}.bottom{position:absolute;left:18px;right:18px;bottom:16px;display:flex;justify-content:space-between;align-items:end}.stick{width:125px;height:125px;border:2px solid #ffffff35;background:#ffffff0c;border-radius:50%;pointer-events:auto;position:relative}.knob{width:52px;height:52px;border-radius:50%;background:#ffffff28;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}#look{width:150px;height:150px}.mobileBtn{pointer-events:auto;width:62px;height:62px;border-radius:50%;background:#ffffff18;border:1px solid #ffffff30;display:grid;place-items:center;font-weight:900}.actions{display:flex;gap:10px;align-items:end}
-#settings{display:none;margin-top:16px;text-align:left}.key{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #ffffff12}.key button{padding:6px 12px}
-@media(min-width:800px){.stick,#look,.actions{display:none}}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#080b12;color:#fff}
+body{display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 15%,#24324b,#080b12 65%)}
+.panel{width:min(92vw,720px);padding:34px;border:1px solid #ffffff1c;border-radius:28px;background:#101722ee;box-shadow:0 25px 90px #0009}
+.brand{text-align:center;margin-bottom:28px}.brand h1{font-size:clamp(46px,10vw,82px);letter-spacing:10px;margin:0;font-weight:950}.brand p{color:#aab5c8;margin:8px 0 0}
+.versions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.version{display:flex;flex-direction:column;text-decoration:none;color:#fff;padding:22px;border:1px solid #ffffff18;border-radius:20px;background:#171f2c;transition:.15s}.version:hover{transform:translateY(-2px);border-color:#6d8dff66;background:#1b2637}.version h2{margin:0 0 8px;font-size:22px}.version p{margin:0 0 18px;color:#aeb8c9;line-height:1.45}.tag{display:inline-block;align-self:flex-start;padding:5px 9px;border-radius:999px;background:#ffffff0d;color:#9fb4ff;font-size:12px;font-weight:800;letter-spacing:.6px}.go{margin-top:auto;padding:11px 14px;border-radius:12px;background:#4c79ff;text-align:center;font-weight:850}.footer{text-align:center;color:#69758a;font-size:12px;margin-top:22px}
+@media(max-width:620px){.versions{grid-template-columns:1fr}.panel{padding:24px}}
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
-<div id="menu"><div class="panel">
-<h1>SURVIVR</h1><p>Top-down battle royale. Fight players, smart bots, and the storm.</p>
-<div class="row"><button id="solo" class="active">SOLO</button><button id="squad">SQUAD</button></div>
-<button class="primary" id="play">PLAY</button>
-<button id="controls">CUSTOMIZE CONTROLS</button>
-<div id="settings"></div>
-</div></div>
-<div id="hud">
-<div class="top"><div>❤️ <span id="hp">100</span><div class="bar"><div id="hpbar" class="fill"></div></div></div><div id="alive">ALIVE 16</div><div>AMMO <span id="ammo">30</span></div></div>
-<div id="status"></div>
-<div class="bottom"><div id="move" class="stick"><div class="knob"></div></div><div class="actions"><button id="reload" class="mobileBtn">R</button><button id="fire" class="mobileBtn">●</button><button id="dash" class="mobileBtn">⇧</button><div id="look" class="stick"><div class="knob"></div></div></div></div>
-</div>
-<script>
-const c=document.getElementById('game'),ctx=c.getContext('2d');let W,H,playing=false,mode='solo',last=0,keys={},mouse={x:0,y:0,down:false},cam={x:0,y:0},p,actors=[],bullets=[],loot=[],storm={x:0,y:0,r:1500,rate:3},kills=0;
-const controls={up:'w',down:'s',left:'a',right:'d',reload:'r'};
-function resize(){W=c.width=innerWidth*devicePixelRatio;H=c.height=innerHeight*devicePixelRatio;c.style.width=innerWidth+'px';c.style.height=innerHeight+'px';ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);W=innerWidth;H=innerHeight}addEventListener('resize',resize);resize();
-const rand=(a,b)=>Math.random()*(b-a)+a,dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-function spawn(){p={x:0,y:0,r:16,hp:100,ammo:30,fire:0,reload:0,speed:210};actors=[];for(let i=0;i<15;i++){let a={x:rand(-900,900),y:rand(-900,900),r:15,hp:100,ammo:30,fire:rand(.2,1.5),speed:rand(100,155),skill:rand(.55,1),target:null,dead:false};actors.push(a)}loot=[];bullets=[];storm={x:0,y:0,r:1500,rate:3};kills=0}
-function shoot(a,tx,ty){if(a.ammo<=0||a.fire>0||a.dead)return;a.ammo--;a.fire=.13+(1-a.skill)*.08;let dx=tx-a.x,dy=ty-a.y,l=Math.hypot(dx,dy)||1;bullets.push({x:a.x,y:a.y,vx:dx/l*760,vy:dy/l*760,owner:a,dmg:22,life:1.2})}
-function nearest(a){let best=null,bd=1e9;if(!p.dead&&a!==p){let d=dist(a,p);if(d<bd){best=p;bd=d}}for(const b of actors)if(b!==a&&!b.dead){let d=dist(a,b);if(d<bd){best=b;bd=d}}return best}
-function update(dt){if(!playing)return;p.fire-=dt;p.reload-=dt;if(p.reload<=0&&p.ammo===0)p.ammo=30;let vx=(keys[controls.right]?1:0)-(keys[controls.left]?1:0),vy=(keys[controls.down]?1:0)-(keys[controls.up]?1:0);let l=Math.hypot(vx,vy)||1;p.x+=vx/l*p.speed*dt;p.y+=vy/l*p.speed*dt;
-if(mouse.down)shoot(p,mouse.x+cam.x,mouse.y+cam.y);
-for(const a of actors){if(a.dead)continue;a.fire-=dt;let t=nearest(a);if(!t)continue;let dx=t.x-a.x,dy=t.y-a.y,d=Math.hypot(dx,dy)||1;let str=Math.sin(performance.now()/500+a.x)*.45;let desired=d>330?1:d<190?-1:0;a.x+=(dx/d*desired-dy/d*str)*a.speed*dt;a.y+=(dy/d*desired+dx/d*str)*a.speed*dt;if(d<700&&Math.random()<a.skill)shoot(a,t.x,t.y);if(Math.hypot(a.x-storm.x,a.y-storm.y)>storm.r)a.hp-=storm.rate*dt}
-for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;for(const t of [p,...actors])if(t!==b.owner&&!t.dead&&dist(b,t)<t.r+5){t.hp-=b.dmg;b.life=0;if(t.hp<=0){t.dead=true;if(b.owner===p)kills++}}}bullets=bullets.filter(b=>b.life>0);
-storm.r=Math.max(260,storm.r-.45*dt);if(Math.hypot(p.x-storm.x,p.y-storm.y)>storm.r)p.hp-=storm.rate*dt;p.hp=Math.max(0,p.hp);document.getElementById('hp').textContent=Math.ceil(p.hp);document.getElementById('hpbar').style.width=p.hp+'%';document.getElementById('ammo').textContent=p.ammo;document.getElementById('alive').textContent='ALIVE '+([p,...actors].filter(x=>!x.dead).length);if(p.hp<=0)end('ELIMINATED');if([p,...actors].filter(x=>!x.dead).length===1&& !p.dead)end('VICTORY')}
-function draw(){ctx.clearRect(0,0,W,H);ctx.save();ctx.translate(W/2-p.x,H/2-p.y);ctx.fillStyle='#263526';ctx.fillRect(p.x-1800,p.y-1800,3600,3600);ctx.strokeStyle='#314531';ctx.lineWidth=2;for(let x=-1800;x<=1800;x+=80){ctx.beginPath();ctx.moveTo(x,-1800);ctx.lineTo(x,1800);ctx.stroke()}for(let y=-1800;y<=1800;y+=80){ctx.beginPath();ctx.moveTo(-1800,y);ctx.lineTo(1800,y);ctx.stroke()}ctx.fillStyle='#425c45';for(let i=-1700;i<1700;i+=180)ctx.fillRect(i,Math.sin(i)*500,65,45);
-ctx.beginPath();ctx.arc(storm.x,storm.y,storm.r,0,Math.PI*2);ctx.fillStyle='#6356b022';ctx.fill();ctx.strokeStyle='#8d7cff';ctx.lineWidth=7;ctx.stroke();
-for(const l of loot){ctx.fillStyle='#e8c44a';ctx.fillRect(l.x-8,l.y-8,16,16)}
-for(const b of bullets){ctx.fillStyle='#ffe58a';ctx.beginPath();ctx.arc(b.x,b.y,4,0,7);ctx.fill()}
-for(const a of actors)if(!a.dead){ctx.fillStyle='#e35b63';ctx.beginPath();ctx.arc(a.x,a.y,a.r,0,7);ctx.fill();ctx.fillStyle='#111';ctx.fillRect(a.x-12,a.y-25,24,4);ctx.fillStyle='#62d8ff';ctx.fillRect(a.x-12,a.y-25,24*Math.max(0,a.hp/100),4)}
-ctx.fillStyle='#55dc78';ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();ctx.restore();
-ctx.fillStyle='#fff';ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.fillText('Kills '+kills,W/2,H-24)}
-function loop(t){let dt=Math.min(.033,(t-last)/1000||0);last=t;update(dt);draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
-function start(){document.getElementById('menu').style.display='none';document.getElementById('hud').style.display='block';playing=true;spawn()}
-function end(msg){playing=false;document.getElementById('status').textContent=msg+' • KILLS '+kills;setTimeout(()=>{document.getElementById('menu').style.display='grid';document.getElementById('hud').style.display='none';document.getElementById('status').textContent=''},900)}
-addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key.toLowerCase()===controls.reload){p.reload=1;if(p) p.ammo=30}});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-c.addEventListener('mousemove',e=>{mouse.x=e.clientX+cam.x-W/2+p.x;mouse.y=e.clientY+cam.y-H/2+p.y});c.addEventListener('mousedown',()=>mouse.down=true);addEventListener('mouseup',()=>mouse.down=false);
-document.getElementById('play').onclick=start;document.getElementById('solo').onclick=()=>{mode='solo';document.getElementById('solo').classList.add('active');document.getElementById('squad').classList.remove('active')};document.getElementById('squad').onclick=()=>{mode='squad';document.getElementById('squad').classList.add('active');document.getElementById('solo').classList.remove('active')};
-document.getElementById('controls').onclick=()=>{let s=document.getElementById('settings');s.style.display=s.style.display==='block'?'none':'block';s.innerHTML=Object.entries(controls).map(([k,v])=>'<div class="key"><span>'+k.toUpperCase()+'</span><button data-k="'+k+'">'+v.toUpperCase()+'</button></div>').join('')};
-document.getElementById('settings').onclick=e=>{if(e.target.tagName==='BUTTON'){let k=e.target.dataset.k;let v=prompt('Press a key for '+k);if(v){controls[k]=v.toLowerCase();e.target.textContent=v.toUpperCase()}}};
-function stick(el,fn){let knob=el.querySelector('.knob');let active=false;const move=e=>{if(!active)return;let r=el.getBoundingClientRect(),x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2,l=Math.hypot(x,y)||1,m=Math.min(42,l);knob.style.transform='translate(calc(-50% + '+x/l*m+'px),calc(-50% + '+y/l*m+'px))';fn(x/l,y/l)};el.addEventListener('pointerdown',e=>{active=true;el.setPointerCapture(e.pointerId);move(e)});el.addEventListener('pointermove',move);el.addEventListener('pointerup',()=>{active=false;knob.style.transform='translate(-50%,-50%)';fn(0,0)})}
-stick(document.getElementById('move'),(x,y)=>{keys[controls.left]=x<-.25;keys[controls.right]=x>.25;keys[controls.up]=y<-.25;keys[controls.down]=y>.25});
-document.getElementById('fire').addEventListener('pointerdown',()=>mouse.down=true);document.getElementById('fire').addEventListener('pointerup',()=>mouse.down=false);document.getElementById('reload').onclick=()=>{if(p)p.ammo=30};document.getElementById('dash').onclick=()=>{if(p){p.x+=rand(-1,1)*120;p.y+=rand(-1,1)*120}};
-</script>
+<main class="panel">
+<section class="brand"><h1>SURVIVR</h1><p>Choose your build.</p></section>
+<section class="versions">
+<a class="version" href="/stable/">
+<span class="tag">STABLE</span><h2>Normal Build</h2><p>The polished playable build. Built for reliability, solo/squad bot matches, touch controls, and customizable keyboard controls.</p><span class="go">PLAY NORMAL BUILD →</span>
+</a>
+<a class="version" href="/experimental/">
+<span class="tag">EXPERIMENTAL</span><h2>Experimental Build</h2><p>New systems land here first: controller input, online presence, and gameplay experiments that may change.</p><span class="go">PLAY EXPERIMENTAL →</span>
+</a>
+</section>
+<div class="footer">Survivr • separate builds, same game</div>
+</main>
 </body>
 </html>
