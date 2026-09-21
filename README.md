@@ -1,21 +1,29 @@
 # Survivr
 
-A cross-device top-down battle royale prototype inspired by browser survival shooters.
+Top-down battle royale prototype with separate Stable and Experimental builds.
 
-## Features
-- PC keyboard + mouse
-- Mobile touch controls
-- Solo and squad-style modes
-- Smart bots with pursuit, strafing, retreat behavior and storm awareness
-- Shrinking storm
-- Shooting, ammo, reloads, health and eliminations
-- Lightweight WebSocket multiplayer foundation
+## Builds
 
-## Run
+- **Normal Build:** /stable/
+- **Experimental Build:** /experimental/
+
+## Local
+
 ```bash
 npm install
 npm start
 ```
-Then open http://localhost:3000.
 
-This is an early playable prototype.
+Then open http://localhost:3000
+
+## Hosting
+
+Survivr is structured as a Node.js Web Service so the HTTP game files and WebSocket server can run together. Render supports Node web services and inbound WebSockets. See the deployment instructions in the project documentation.
+
+The free Render web service is suitable for testing/hobby use, but free services can spin down after inactivity.
+
+## Controls
+
+- PC: WASD + mouse
+- Mobile: virtual sticks + action buttons
+- Experimental: adds gamepad input and basic online player presence
