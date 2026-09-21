@@ -116,9 +116,9 @@ wss.on('connection',ws=>{
 
       if(msg.type==='shoot'&&!p.dead){
         const now=Date.now();
-        if(now-p.lastShot<100)continue;
+        if(now-p.lastShot<100)return;
         const tx=Number(msg.x),ty=Number(msg.y);
-        if(!Number.isFinite(tx)||!Number.isFinite(ty))continue;
+        if(!Number.isFinite(tx)||!Number.isFinite(ty))return;
         p.lastShot=now;
 
         let hit=null;
